@@ -11,29 +11,18 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { deleteRecipe } from "../../api/recipeApi";
 
 export default function DeleteRecipe({ id, onClose }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Function to call API
-  const deleteRecipe = async (_id) => {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${backendUrl}/recipe/${_id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if (!response.ok) throw new Error("Failed to delete recipe");
-    return response.json();
-  };
-
   // React Query mutation
   const mutation = useMutation({
-    mutationFn: deleteRecipe,
+    mutationFn: ()=>{
+      const token = localStorage.getItem("token")
+      return deleteRecipe(id,token);
+    },
     onSuccess: () => {
       toast.success("Recipe deleted successfully!");
       queryClient.invalidateQueries({ queryKey: ["recipe"] }); // refresh cached recipes

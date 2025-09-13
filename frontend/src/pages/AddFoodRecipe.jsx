@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { Box, Button, TextField, Typography, Paper, Grid } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { IoMdClose } from "react-icons/io";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { addRecipe } from "../api/recipeApi";
 
 export default function AddRecipe() {
   const [preview, setPreview] = useState(null);
@@ -19,43 +17,21 @@ export default function AddRecipe() {
     image: null,
   });
   const navigate = useNavigate();
-
   const queryClient = useQueryClient();
   const refetch = () => queryClient.invalidateQueries(["addRecipe"]);
 
   const addRecipeMutation = useMutation({
-    mutationFn: (data) => {
-      const form = new FormData();
-      form.append("title", data.title);
-      form.append("time", data.time);
-      form.append("ingredients", JSON.stringify(data.ingredients));
-      form.append("instructions", data.instructions);
-      if (data.image) form.append("coverImage", data.image);
-
+    mutationFn: (formData) => {
       const token = localStorage.getItem("token");
-
-      return axios.post(`${backendUrl}/recipe/addRecipe`, form, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          authorization: `Bearer ${token}`,
-        },
-      });
+      return addRecipe(formData, token);
     },
     onSuccess: () => {
       toast.success("Recipe added successfully!");
       navigate("/myRecipe");
       refetch();
-      setFormData({
-        title: "",
-        time: "",
-        ingredients: "",
-        instructions: "",
-        image: null,
-      });
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to add recipe.");
-      // console.error(error);
     },
   });
 
@@ -111,7 +87,7 @@ export default function AddRecipe() {
           textAlign="center"
           variant="h5"
           fontWeight="bold"
-          sx={{ color: "#5fb298",marginBottom:"10px" }}
+          sx={{ color: "#5fb298", marginBottom: "10px" }}
         >
           Add Your Recipe
         </Typography>

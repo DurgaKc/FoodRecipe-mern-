@@ -1,23 +1,10 @@
 import { useEffect, useState } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  Grid,
-} from "@mui/material";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import axios from "axios";
+import { Box, Button, TextField, Typography, Paper, Grid } from "@mui/material";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router-dom";
 import { IoMdClose } from "react-icons/io";
-
-const backendUrl = import.meta.env.VITE_BACKEND_URL;
+import { fetchRecipeById, updateRecipe } from "../../api/recipeApi";
 
 export default function EditRecipe() {
   const [preview, setPreview] = useState(null);
@@ -37,10 +24,7 @@ export default function EditRecipe() {
   // ✅ fetch recipe by id
   const { data: recipeData, isLoading } = useQuery({
     queryKey: ["recipe", id],
-    queryFn: async () => {
-      const res = await axios.get(`${backendUrl}/recipe/${id}`);
-      return res.data;
-    },
+    queryFn: async () => fetchRecipeById(id),
     enabled: !!id, // only fetch if ID exists
   });
 
@@ -62,39 +46,9 @@ export default function EditRecipe() {
 
   // ✅ mutation for updating recipe
   const updateRecipeMutation = useMutation({
-    mutationFn: async (updatedRecipe) => {
+    mutationFn: (updatedRecipe) => {
       const token = localStorage.getItem("token");
-
-      const form = new FormData();
-      form.append("title", updatedRecipe.title);
-      form.append("time", updatedRecipe.time);
-      form.append(
-        "ingredients",
-        JSON.stringify(
-          updatedRecipe.ingredients.split(",").map((i) => i.trim())
-        )
-      );
-      form.append("instructions", updatedRecipe.instructions);
-
-      // handle image
-      if (updatedRecipe.image instanceof File) {
-        form.append("image", updatedRecipe.image);
-      } else if (typeof updatedRecipe.image === "string") {
-        form.append("existingImage", updatedRecipe.image); // backend should handle keeping old image
-      }
-
-      const res = await axios.put(
-        `${backendUrl}/recipe/updateRecipe/${id}`,
-        form,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      return res.data;
+      return updateRecipe(id, updatedRecipe, token); //from api
     },
     onSuccess: () => {
       toast.success("Recipe updated successfully!");
@@ -132,33 +86,46 @@ export default function EditRecipe() {
   if (isLoading) return <p>Loading...</p>;
 
   return (
-<Box sx={{ display: "flex", justifyContent: "center", my: 4, position: "relative" }}>
-  <Paper
-    sx={{ p: 4, width: "100%", maxWidth: 800, borderRadius: 2, position: "relative" }}
-    elevation={4}
-  >
-    {/* Close Icon at Top Right */}
-    <IoMdClose
-      onClick={() => navigate("/myRecipe")}
-      size={28}
-      style={{
-        cursor: "pointer",
-        position: "absolute",
-        top: 16,
-        right: 16,
-        color: "#555",
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        my: 4,
+        position: "relative",
       }}
-    />
-
-    <Typography
-      textAlign="center"
-      variant="h5"
-      fontWeight="bold"
-      gutterBottom
-      sx={{ pb: 3, color: "#5fb298" }}
     >
-      Update Your Recipe
-    </Typography>
+      <Paper
+        sx={{
+          p: 4,
+          width: "100%",
+          maxWidth: 800,
+          borderRadius: 2,
+          position: "relative",
+        }}
+        elevation={4}
+      >
+        {/* Close Icon at Top Right */}
+        <IoMdClose
+          onClick={() => navigate("/myRecipe")}
+          size={28}
+          style={{
+            cursor: "pointer",
+            position: "absolute",
+            top: 16,
+            right: 16,
+            color: "#555",
+          }}
+        />
+
+        <Typography
+          textAlign="center"
+          variant="h5"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ pb: 3, color: "#5fb298" }}
+        >
+          Update Your Recipe
+        </Typography>
 
         <form onSubmit={handleSubmit}>
           {/* Title */}

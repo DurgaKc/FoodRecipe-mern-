@@ -10,15 +10,10 @@ import {
 import { FaHeart } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { fetchRecipes } from "../api/recipeApi";
+import { getFavs, toggleFav } from "../services/favServices";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-// Fetch all recipes
-const fetchRecipes = async () => {
-  const response = await fetch(`${backendUrl}/recipe`);
-  if (!response.ok) throw new Error("Failed to fetch recipes");
-  return response.json();
-};
 
 export default function Favourites() {
   const [favItems, setFavItems] = useState([]);
@@ -27,10 +22,10 @@ export default function Favourites() {
   // Get current user and their favorites
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
-    if (user?._id) setUserId(user._id);
-
-    const storedFav = JSON.parse(localStorage.getItem("fav")) || {};
-    setFavItems(storedFav[user?._id] || []);
+    if (user?._id) {
+      setUserId(user._id);
+      setFavItems(getFavs(user._id)); 
+    }
   }, []);
 
   const { data, isLoading, error } = useQuery({
@@ -38,24 +33,10 @@ export default function Favourites() {
     queryFn: fetchRecipes,
   });
 
-  // Toggle favorite (optional, to remove from favorites)
-  const toggleFav = (recipeId) => {
-    if (!userId) return;
-
-    let updatedFav = [...favItems];
-    if (favItems.includes(recipeId)) {
-      updatedFav = updatedFav.filter((id) => id !== recipeId);
-    } else {
-      updatedFav.push(recipeId);
-    }
-
-    setFavItems(updatedFav);
-
-    // Update localStorage per user
-    const allFav = JSON.parse(localStorage.getItem("fav")) || {};
-    allFav[userId] = updatedFav;
-    localStorage.setItem("fav", JSON.stringify(allFav));
-  };
+ const handleToggleFav = (recipeId) =>{
+  const updatedFav = toggleFav(recipeId, favItems, userId);
+  setFavItems(updatedFav);
+ }
 
   // Filter only favorite recipes
   const favoriteRecipes = data?.filter((recipe) => favItems.includes(recipe._id)) || [];
@@ -147,7 +128,7 @@ export default function Favourites() {
             <Typography variant="body2" color="#4b5563">
               ⏱️ {recipe.time} mins
             </Typography>
-            <IconButton onClick={() => toggleFav(recipe._id)}>
+            <IconButton onClick={() => handleToggleFav(recipe._id)}>
               <FaHeart color={favItems.includes(recipe._id) ? "#ef4444" : "#ccc"} />
             </IconButton>
           </Grid>
