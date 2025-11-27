@@ -13,7 +13,6 @@ const app = express();
 // Resolving __dirname in ES module
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-console.log(__dirname);
 
 const PORT = process.env.PORT || 3000;
 connectDb();
@@ -30,10 +29,15 @@ app.use(express.static('public'));
 app.use('/', userRoutes);
 app.use('/recipe', recipeRoutes);
 
-//use the client app
-app.use(express.static(path.join(__dirname,'/client/dist')))
+// Serve frontend build
+app.use(express.static(path.join(__dirname, '/client/dist')));
 
-// Render client for any path
+// Catch-all route for SPA
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'client/dist', 'index.html'));
+});
+
+// ✅ Start server
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
