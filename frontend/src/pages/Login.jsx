@@ -19,7 +19,7 @@ export default function Login({ onClose }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
 
-  // 🔹 Mutation for login/signup
+  //Mutation for login/signup
   const mutation = useMutation({
     mutationFn: async (formData) => {
       if (isSignup) {
