@@ -9,50 +9,38 @@ import {
 } from "@mui/material";
 import { FaHeart } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { useState, useEffect } from "react";
 import { fetchRecipes } from "../../api/recipeApi";
 import { getFavs, toggleFav } from "../../services/favServices";
+import { useAuth } from "../../context/AuthContext";
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export default function RecipeLists() {
+  const { user } = useAuth();
   const [favItems, setFavItems] = useState([]);
-  const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
 
-  // Load user and favorites from localStorage
+  // Load favorites when user changes
   useEffect(() => {
-  const userData = localStorage.getItem("user");
-
-  if (!userData) {
-    console.warn("No user found in localStorage");
-    return;
-  }
-
-  let user = null;
-  try {
-    user = JSON.parse(userData);
-  } catch (err) {
-    console.error("Invalid user in localStorage:", err);
-    return; // stop execution
-  }
-
-  if (user && user._id) {
-    setUserId(user._id);
-    setFavItems(getFavs(user._id));
-  }
-}, []);
-
+    if (user?._id) {
+      setFavItems(getFavs(user._id));
+    } else {
+      setFavItems([]);
+    }
+  }, [user]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["recipe"],
     queryFn: fetchRecipes,
   });
 
- const handleToggleFav = (recipeId)=>{
-  const updatedFav = toggleFav(recipeId, favItems, userId);
-  setFavItems(updatedFav);
- }
+  const handleToggleFav = (recipeId) => {
+    if (!user?._id) return;
+    const updatedFav = toggleFav(recipeId, favItems, user._id);
+    setFavItems(updatedFav);
+  };
 
   return (
     <div className="min-h-screen">
@@ -103,18 +91,18 @@ export default function RecipeLists() {
                 <Box
                   sx={{
                     width: "100%",
-                    height: 200, // fixed height
+                    height: 200,
                     overflow: "hidden",
-                    borderRadius: "20px 20px 0 0", // top corners rounded
+                    borderRadius: "20px 20px 0 0",
                   }}
                 >
                   <img
-                    src={`http://localhost:5000/images/${recipe.coverImage}`}
+                    src={`${backendUrl}/images/${recipe.coverImage}`}
                     alt={recipe.title}
                     style={{
                       width: "100%",
                       height: "100%",
-                      objectFit: "cover", // cover the container
+                      objectFit: "cover",
                       display: "block",
                     }}
                   />
@@ -140,11 +128,11 @@ export default function RecipeLists() {
                     <FaHeart color={favItems.includes(recipe._id) ? "#ef4444" : "#ccc"} />
                   </IconButton>
                   <button
-                className="bg-green-300 p-1 rounded-lg text-sm hover:bg-green-400"
-                onClick={() => navigate(`/recipe/${recipe._id}`)}
-              >
-                View Details
-              </button>
+                    className="bg-green-300 p-1 rounded-lg text-sm hover:bg-green-400"
+                    onClick={() => navigate(`/recipe/${recipe._id}`)}
+                  >
+                    View Details
+                  </button>
                 </Grid>
               </CardContent>
             </Card>

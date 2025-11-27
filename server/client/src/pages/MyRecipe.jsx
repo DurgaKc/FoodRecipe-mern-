@@ -5,59 +5,44 @@ import {
   Typography,
   Grid,
   IconButton,
-  CircularProgress,} from "@mui/material";
+  CircularProgress,
+} from "@mui/material";
 import { FaHeart } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-//import helpers
 import { getMyRecipes } from "../api/recipeApi";
 import { getFavs, toggleFav } from "../services/favServices";
+import { useAuth } from "../context/AuthContext";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export default function MyRecipe() {
-  const [favItems, setFavItems] = useState([]);
-  const [userId, setUserId] = useState(null);
+  const { user, token } = useAuth(); // get user and token from context
   const navigate = useNavigate();
+  const [favItems, setFavItems] = useState([]);
 
-useEffect(() => {
-  const stored = localStorage.getItem("user");
-
-  let user = null;
-
-  // Only parse if stored is valid JSON
-  if (stored && stored !== "undefined" && stored !== "null") {
-    try {
-      user = JSON.parse(stored);
-    } catch (err) {
-      console.error("Invalid JSON in localStorage for user:", err);
-      localStorage.removeItem("user"); // remove invalid data
-      user = null;
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!user?._id || !token) {
+      navigate("/login");
+    } else {
+      setFavItems(getFavs(user._id));
     }
-  }
-
-  if (user && user._id) {
-    setUserId(user._id);
-    setFavItems(getFavs(user._id));
-  } else {
-    setUserId(null);
-    setFavItems([]);
-  }
-}, []);
-
-
+  }, [user, token, navigate]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["myRecipes", userId],
-     queryFn: () => getMyRecipes(userId),
-    enabled: !!userId, // only fetch if user exists
+    queryKey: ["myRecipes", user?._id],
+    queryFn: () => getMyRecipes(user._id, token), // pass token if needed for API
+    enabled: !!user?._id,
   });
-  
-    const handleToggleFav = (recipeId)=>{
-      const updated = toggleFav(recipeId, favItems, userId);
-      setFavItems(updated);
-    }
+
+  const handleToggleFav = (recipeId) => {
+    if (!user?._id) return;
+    const updated = toggleFav(recipeId, favItems, user._id);
+    setFavItems(updated);
+  };
+
   return (
     <div className="min-h-screen">
       <Box
@@ -70,9 +55,7 @@ useEffect(() => {
         }}
       >
         {isLoading && (
-          <Box
-            sx={{ display: "flex", justifyContent: "center", width: "100%" }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
             <CircularProgress />
           </Box>
         )}
@@ -105,7 +88,7 @@ useEffect(() => {
                 <Box
                   sx={{
                     width: "100%",
-                    height: 200, // fixed height
+                    height: 200,
                     overflow: "hidden",
                     position: "relative",
                   }}
@@ -116,7 +99,7 @@ useEffect(() => {
                     style={{
                       width: "100%",
                       height: "100%",
-                      objectFit: "cover", // cover fills the box without stretching
+                      objectFit: "cover",
                       display: "block",
                     }}
                   />
@@ -134,19 +117,12 @@ useEffect(() => {
                   {recipe.title}
                 </Typography>
 
-                <Grid
-                  container
-                  justifyContent="space-between"
-                  alignItems="center"
-                  sx={{ mt: 1 }}
-                >
+                <Grid container justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
                   <Typography variant="body2" color="#4b5563">
                     ⏱️ {recipe.time} mins
                   </Typography>
                   <IconButton onClick={() => handleToggleFav(recipe._id)}>
-                    <FaHeart
-                      color={favItems.includes(recipe._id) ? "#ef4444" : "#ccc"}
-                    />
+                    <FaHeart color={favItems.includes(recipe._id) ? "#ef4444" : "#ccc"} />
                   </IconButton>
                   <button
                     className="bg-green-300 p-1 rounded-lg text-sm hover:bg-green-400"

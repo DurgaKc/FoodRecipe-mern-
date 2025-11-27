@@ -1,118 +1,64 @@
 import { useState } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  InputAdornment,
-  IconButton,
-} from "@mui/material";
+import { Box, Paper, Typography, TextField, Button, InputAdornment, IconButton } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export default function Login({ onClose }) {
+  const { login } = useAuth();
+  const navigate = useNavigate();
+
   const [values, setValues] = useState({ name: "", email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
 
-  //Mutation for login/signup
   const mutation = useMutation({
     mutationFn: async (formData) => {
       if (isSignup) {
-        return axios.post(`${backendUrl}/signup`, formData); // signup API
+        return axios.post(`${backendUrl}/signup`, formData);
       } else {
-        return axios.post(`${backendUrl}/login`, formData); // login API
+        return axios.post(`${backendUrl}/login`, formData);
       }
     },
     onSuccess: (res) => {
-      console.log("✅ Success:", res.data);
+      const { user, token } = res.data;
 
-      const { token, user } = res.data;
-
-      if (token) {
-        localStorage.setItem("token", token);
+      if (!user || !token) {
+        toast.error("Invalid login response");
+        return;
       }
 
-      if (user) {
-        localStorage.setItem("user", JSON.stringify(user));
-      } else {
-        // Prevent JSON.parse(undefined) error
-        localStorage.removeItem("user");
-      }
-
-      toast.success(
-        isSignup ? "Account created Successfully!" : "Logged in Successfully!"
-      );
+      login(user, token); // store in context + localStorage
+      toast.success(isSignup ? "Account created!" : "Logged in!");
       onClose();
+      navigate("/myRecipe"); // redirect after login
+    },
+    onError: () => {
+      toast.error("Login failed. Check your credentials.");
     },
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    mutation.mutate(values); // send values to backend
-  };
-
-  const handleChange = (e) => {
-    setValues({ ...values, [e.target.name]: e.target.value });
-  };
+  const handleChange = (e) => setValues({ ...values, [e.target.name]: e.target.value });
+  const handleSubmit = (e) => { e.preventDefault(); mutation.mutate(values); };
 
   return (
     <Box>
-      <Paper
-        elevation={6}
-        sx={{
-          p: 4,
-          width: "100%",
-          maxWidth: 400,
-          borderRadius: 4,
-          textAlign: "center",
-          backgroundColor: "rgba(255,255,255,0.85)",
-          backdropFilter: "blur(8px)",
-        }}
-      >
-        <Typography
-          variant="h4"
-          fontWeight="bold"
-          gutterBottom
-          sx={{ color: "#1e293b" }}
-        >
+      <Paper sx={{ p: 4, width: "100%", maxWidth: 400, borderRadius: 4, textAlign: "center", backgroundColor: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)" }} elevation={6}>
+        <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ color: "#1e293b" }}>
           {isSignup ? "Create Account ✨" : "Welcome Back 👋"}
         </Typography>
         <Typography variant="body1" sx={{ mb: 3, color: "#4b5563" }}>
-          {isSignup
-            ? "Please sign up to get started"
-            : "Please login to continue"}
+          {isSignup ? "Please sign up to get started" : "Please login to continue"}
         </Typography>
 
         <form onSubmit={handleSubmit}>
-          {isSignup && (
-            <TextField
-              label="Full Name"
-              name="name"
-              type="text"
-              value={values.name}
-              onChange={handleChange}
-              fullWidth
-              required
-              sx={{ mb: 2 }}
-            />
-          )}
-
-          <TextField
-            label="Email"
-            name="email"
-            type="email"
-            value={values.email}
-            onChange={handleChange}
-            fullWidth
-            required
-            sx={{ mb: 2 }}
-          />
-
+          {isSignup && <TextField label="Full Name" name="name" value={values.name} onChange={handleChange} fullWidth required sx={{ mb: 2 }} />}
+          <TextField label="Email" name="email" type="email" value={values.email} onChange={handleChange} fullWidth required sx={{ mb: 2 }} />
           <TextField
             label="Password"
             name="password"
@@ -132,41 +78,14 @@ export default function Login({ onClose }) {
               ),
             }}
           />
-
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            disabled={mutation.isLoading}
-            sx={{
-              py: 1.5,
-              backgroundColor: "#5fb298",
-              fontSize: "1rem",
-              fontWeight: "bold",
-              borderRadius: "12px",
-              textTransform: "none",
-              "&:hover": { backgroundColor: "#44927c" },
-            }}
-          >
-            {mutation.isLoading
-              ? "Processing..."
-              : isSignup
-              ? "Sign Up"
-              : "Login"}
+          <Button type="submit" fullWidth variant="contained" sx={{ py: 1.5, backgroundColor: "#5fb298", fontWeight: "bold", borderRadius: "12px", "&:hover": { backgroundColor: "#44927c" } }}>
+            {mutation.isLoading ? "Processing..." : isSignup ? "Sign Up" : "Login"}
           </Button>
         </form>
 
         <Typography sx={{ mt: 2, color: "#4b5563" }}>
           {isSignup ? "Already have an account?" : "Don’t have an account?"}{" "}
-          <Button
-            variant="text"
-            onClick={() => setIsSignup(!isSignup)}
-            sx={{
-              color: "#bf2450",
-              fontWeight: "bold",
-              textTransform: "none",
-            }}
-          >
+          <Button variant="text" onClick={() => setIsSignup(!isSignup)} sx={{ color: "#bf2450", fontWeight: "bold", textTransform: "none" }}>
             {isSignup ? "Login" : "Create new account"}
           </Button>
         </Typography>
