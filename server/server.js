@@ -34,7 +34,10 @@ app.use('/recipe', recipeRoutes);
 app.use(express.static(path.join(__dirname,'/client/dist')))
 
 // Render client for any path
-app.get('*',(req,res)=>res.sendFile(path.join(__dirname,'/client/dist/index.html')))
+app.get('/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/dist', 'index.html'));
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`App is running on port ${PORT}`);
