@@ -22,12 +22,27 @@ export default function RecipeLists() {
 
   // Load user and favorites from localStorage
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-  if (user?._id) {
-      setUserId(user._id);
-      setFavItems(getFavs(user._id)); 
-    }
-  }, []);
+  const userData = localStorage.getItem("user");
+
+  if (!userData) {
+    console.warn("No user found in localStorage");
+    return;
+  }
+
+  let user = null;
+  try {
+    user = JSON.parse(userData);
+  } catch (err) {
+    console.error("Invalid user in localStorage:", err);
+    return; // stop execution
+  }
+
+  if (user && user._id) {
+    setUserId(user._id);
+    setFavItems(getFavs(user._id));
+  }
+}, []);
+
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["recipe"],

@@ -22,12 +22,31 @@ export default function MyRecipe() {
   const navigate = useNavigate();
 
 useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (user?._id) {
-      setUserId(user._id);
-      setFavItems(getFavs(user._id)); // load favorites
+  const stored = localStorage.getItem("user");
+
+  let user = null;
+
+  // Only parse if stored is valid JSON
+  if (stored && stored !== "undefined" && stored !== "null") {
+    try {
+      user = JSON.parse(stored);
+    } catch (err) {
+      console.error("Invalid JSON in localStorage for user:", err);
+      localStorage.removeItem("user"); // remove invalid data
+      user = null;
     }
-  }, []);
+  }
+
+  if (user && user._id) {
+    setUserId(user._id);
+    setFavItems(getFavs(user._id));
+  } else {
+    setUserId(null);
+    setFavItems([]);
+  }
+}, []);
+
+
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["myRecipes", userId],

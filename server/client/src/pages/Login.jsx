@@ -30,14 +30,24 @@ export default function Login({ onClose }) {
     },
     onSuccess: (res) => {
       console.log("✅ Success:", res.data);
-      // Save token and user info
-      localStorage.setItem("token", res.data.token); // assuming backend returns { token: "...", user: {...} }
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-      toast.success(isSignup ? "Account created Successfully!" : "Logged in Successfully!");
+
+      const { token, user } = res.data;
+
+      if (token) {
+        localStorage.setItem("token", token);
+      }
+
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+      } else {
+        // Prevent JSON.parse(undefined) error
+        localStorage.removeItem("user");
+      }
+
+      toast.success(
+        isSignup ? "Account created Successfully!" : "Logged in Successfully!"
+      );
       onClose();
-    },
-    onError: (err) => {
-      toast.error("Something went wrong!");
     },
   });
 
