@@ -10,15 +10,16 @@ const PORT=process.env.PORT || 3000
 // ✅ Middleware to parse JSON & form data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 
-app.use(cors())
+// Serve static images from /public folder
+app.use(express.static("public"));
 
-// Serve images statically
-app.use(express.static("public"))
+// Routes
+app.use("/", require("./routes/user"));
+app.use("/recipe", require("./routes/recipe"));
 
-app.use("/",require("./routes/user"))
-app.use("/recipe",require("./routes/recipe"))
-
-app.listen(PORT,(env)=>{
-    console.log(`app is running on port ${PORT}`)
-})
+// Start server
+app.listen(PORT, () => {
+  console.log(`App is running on port ${PORT}`);
+});
