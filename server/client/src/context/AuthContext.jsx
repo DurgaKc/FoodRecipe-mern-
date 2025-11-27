@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from "react";
+// src/context/AuthContext.js
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
 
 const AuthContext = createContext();
 
@@ -12,7 +13,7 @@ export function AuthProvider({ children }) {
     const storedToken = localStorage.getItem("token");
 
     let parsedUser = null;
-    if (storedUser && storedUser !== "undefined" && storedUser !== "null") {
+    if (storedUser) {
       try {
         parsedUser = JSON.parse(storedUser);
       } catch {
@@ -45,8 +46,11 @@ export function AuthProvider({ children }) {
     setToken(null);
   };
 
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(() => ({ user, token, login, logout }), [user, token]);
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
