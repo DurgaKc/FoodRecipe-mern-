@@ -37,8 +37,3 @@ app.use(express.static(path.join(__dirname,'/client/dist')))
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'client/dist', 'index.html'));
 });
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`App is running on port ${PORT}`);
-});
