@@ -3,7 +3,7 @@ import { userSignUp, userLogin, getUser } from '../controller/user.js';
 
 const router = Router();
 
-router.post('/signUp', userSignUp);
+router.post('/signup', userSignUp);
 router.post('/login', userLogin);
 router.get('/user/:id', getUser);
 

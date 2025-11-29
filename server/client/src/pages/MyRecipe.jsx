@@ -12,36 +12,52 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getMyRecipes } from "../api/recipeApi";
-import { getFavs, toggleFav } from "../services/favServices";
 import { useAuth } from "../context/AuthContext";
+import { getFavs, toggleFav } from "./Favourites"; // Import from Favourites
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 export default function MyRecipe() {
-  const { user, token } = useAuth(); // get user and token from context
+  const { user, token } = useAuth();
   const navigate = useNavigate();
+  const userId = user?._id || user?.id;
+
   const [favItems, setFavItems] = useState([]);
 
-  // Redirect to login if not authenticated
+  // Load favorites when user changes
   useEffect(() => {
-    if (!user?._id || !token) {
-      navigate("/login");
+    if (userId) {
+      const favs = getFavs(userId);
+      setFavItems(favs);
     } else {
-      setFavItems(getFavs(user._id));
+      setFavItems([]);
     }
-  }, [user, token, navigate]);
+  }, [userId]);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["myRecipes", user?._id],
-    queryFn: () => getMyRecipes(user._id, token), // pass token if needed for API
-    enabled: !!user?._id,
+  // Fetch recipes
+  const {
+    data: recipes,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["myRecipes", userId],
+    queryFn: () => getMyRecipes(userId, token),
+    enabled: !!userId,
   });
 
+  // Toggle favorite
   const handleToggleFav = (recipeId) => {
-    if (!user?._id) return;
-    const updated = toggleFav(recipeId, favItems, user._id);
+    if (!userId) {
+      console.log("No user ID available");
+      return;
+    }
+    
+    console.log("Toggling favorite for recipe:", recipeId);
+    const updated = toggleFav(recipeId, userId);
     setFavItems(updated);
   };
+
+  if (!userId) return null;
 
   return (
     <div className="min-h-screen">
@@ -55,20 +71,22 @@ export default function MyRecipe() {
         }}
       >
         {isLoading && (
-          <Box sx={{ display: "flex", justifyContent: "center", width: "100%" }}>
+          <Box
+            sx={{ display: "flex", justifyContent: "center", width: "100%" }}
+          >
             <CircularProgress />
           </Box>
         )}
 
         {error && (
           <Typography color="error" align="center" sx={{ width: "100%" }}>
-            {error.message}
+            {error.message || "Failed to load recipes"}
           </Typography>
         )}
 
-        {data &&
-          Array.isArray(data) &&
-          data.map((recipe) => (
+        {recipes &&
+          Array.isArray(recipes) &&
+          recipes.map((recipe) => (
             <Card
               key={recipe._id}
               sx={{
@@ -100,7 +118,6 @@ export default function MyRecipe() {
                       width: "100%",
                       height: "100%",
                       objectFit: "cover",
-                      display: "block",
                     }}
                   />
                 </Box>
@@ -117,14 +134,30 @@ export default function MyRecipe() {
                   {recipe.title}
                 </Typography>
 
-                <Grid container justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+                <Grid
+                  container
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ mt: 1 }}
+                >
                   <Typography variant="body2" color="#4b5563">
                     ⏱️ {recipe.time} mins
                   </Typography>
-                  <IconButton onClick={() => handleToggleFav(recipe._id)}>
-                    <FaHeart color={favItems.includes(recipe._id) ? "#ef4444" : "#ccc"} />
+                  <IconButton 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleFav(recipe._id);
+                    }}
+                  >
+                    <FaHeart
+                      color={
+                        favItems.map(String).includes(String(recipe._id))
+                          ? "#ef4444"
+                          : "#ccc"
+                      }
+                    />
                   </IconButton>
-                  <button
+                   <button
                     className="bg-green-300 p-1 rounded-lg text-sm hover:bg-green-400"
                     onClick={() => navigate(`/recipe/${recipe._id}`)}
                   >

@@ -11,50 +11,85 @@ import { FaHeart } from "react-icons/fa";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { fetchRecipes } from "../api/recipeApi";
-import { getFavs, toggleFav } from "../services/favServices";
+import { useAuth } from "../context/AuthContext";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-export default function Favourites() {
-  const [favItems, setFavItems] = useState([]);
-  const [userId, setUserId] = useState(null);
+// ===== Favorite helpers =====
+export const getFavs = (userId) => {
+  if (!userId) return [];
+  try {
+    const favData = JSON.parse(localStorage.getItem("favs") || "{}");
+    return Array.isArray(favData[userId]) ? favData[userId] : [];
+  } catch (error) {
+    console.error("Error reading favorites:", error);
+    return [];
+  }
+};
 
-  // Load user and favorites
-  useEffect(() => {
-    const stored = localStorage.getItem("user");
-    let user = null;
-
-    if (stored && stored !== "undefined" && stored !== "null") {
-      try {
-        user = JSON.parse(stored);
-      } catch (err) {
-        console.error("Invalid JSON in localStorage for user:", err);
-        localStorage.removeItem("user"); // remove corrupted data
-      }
+export const toggleFav = (recipeId, userId) => {
+  if (!userId) return [];
+  
+  try {
+    const favData = JSON.parse(localStorage.getItem("favs") || "{}");
+    const currentFavs = getFavs(userId);
+    
+    let updatedFavs;
+    const stringRecipeId = String(recipeId);
+    const stringCurrentFavs = currentFavs.map(String);
+    
+    if (stringCurrentFavs.includes(stringRecipeId)) {
+      updatedFavs = currentFavs.filter(id => String(id) !== stringRecipeId);
+    } else {
+      updatedFavs = [...currentFavs, recipeId];
     }
 
-    if (user && user._id) {
-      setUserId(user._id);
-      const favs = getFavs(user._id);
-      setFavItems(Array.isArray(favs) ? favs : []);
+    favData[userId] = updatedFavs;
+    localStorage.setItem("favs", JSON.stringify(favData));
+    return updatedFavs;
+  } catch (error) {
+    console.error("Error toggling favorite:", error);
+    return [];
+  }
+};
+
+export default function Favourites() {
+  const { user } = useAuth();
+  const userId = user?.id || user?._id;
+
+  const [favItems, setFavItems] = useState([]);
+
+  // Load user's favorite IDs
+  useEffect(() => {
+    if (userId) {
+      const favs = getFavs(userId);
+      setFavItems(favs);
     } else {
-      setUserId(null);
       setFavItems([]);
     }
-  }, []);
+  }, [userId]);
 
+  // Fetch all recipes
   const { data, isLoading, error } = useQuery({
-    queryKey: ["recipe"],
+    queryKey: ["recipes"],
     queryFn: fetchRecipes,
   });
 
   const handleToggleFav = (recipeId) => {
-    if (!userId) return; // prevent toggling if no user
-    const updatedFav = toggleFav(recipeId, favItems, userId);
-    setFavItems(Array.isArray(updatedFav) ? updatedFav : []);
+    if (!userId) {
+      console.log("No user ID available");
+      return;
+    }
+    
+    console.log("Toggling favorite for recipe:", recipeId);
+    const updatedFav = toggleFav(recipeId, userId);
+    setFavItems(updatedFav);
   };
 
-  const favoriteRecipes = data?.filter((recipe) => favItems.includes(recipe._id)) || [];
+  // Filter recipes to show only favorites
+  const favoriteRecipes = data?.filter((recipe) => 
+    favItems.map(String).includes(String(recipe._id))
+  ) || [];
 
   return (
     <div className="min-h-screen">
@@ -77,14 +112,14 @@ export default function Favourites() {
         {/* Error */}
         {error && (
           <Typography color="error" align="center" sx={{ width: "100%" }}>
-            {error.message}
+            {error.message || "Failed to load recipes"}
           </Typography>
         )}
 
         {/* No Favorites */}
         {!isLoading && favoriteRecipes.length === 0 && (
           <Typography align="center" sx={{ width: "100%" }}>
-            You have no favorite recipes.
+            {userId ? "You have no favorite recipes." : "Please log in to view favorites."}
           </Typography>
         )}
 
@@ -138,12 +173,26 @@ export default function Favourites() {
                 {recipe.title}
               </Typography>
 
-              <Grid container justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+              <Grid
+                container
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ mt: 1 }}
+              >
                 <Typography variant="body2" color="#4b5563">
                   ⏱️ {recipe.time} mins
                 </Typography>
-                <IconButton onClick={() => handleToggleFav(recipe._id)}>
-                  <FaHeart color={favItems.includes(recipe._id) ? "#ef4444" : "#ccc"} />
+                <IconButton 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleFav(recipe._id);
+                  }}
+                >
+                  <FaHeart
+                    color={favItems.map(String).includes(String(recipe._id))
+                      ? "#ef4444"
+                      : "#ccc"}
+                  />
                 </IconButton>
               </Grid>
             </CardContent>

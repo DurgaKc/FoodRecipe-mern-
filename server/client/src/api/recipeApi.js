@@ -26,7 +26,6 @@ export const addRecipe = async (data,token)=>{
   return response.json();
  };
 
- // ✅ Fetch recipes created by current user
 // ✅ Fetch all recipes
 export const getAllRecipes = async () => {
   const res = await axios.get(`${backendUrl}/recipe`);

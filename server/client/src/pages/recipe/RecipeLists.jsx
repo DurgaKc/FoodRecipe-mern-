@@ -12,8 +12,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { fetchRecipes } from "../../api/recipeApi";
-import { getFavs, toggleFav } from "../../services/favServices";
 import { useAuth } from "../../context/AuthContext";
+import { getFavs, toggleFav } from "../Favourites"; // Import from Favourites
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -21,15 +21,17 @@ export default function RecipeLists() {
   const { user } = useAuth();
   const [favItems, setFavItems] = useState([]);
   const navigate = useNavigate();
+  const userId = user?._id || user?.id;
 
   // Load favorites when user changes
   useEffect(() => {
-    if (user?._id) {
-      setFavItems(getFavs(user._id));
+    if (userId) {
+      const favs = getFavs(userId);
+      setFavItems(favs);
     } else {
       setFavItems([]);
     }
-  }, [user]);
+  }, [userId]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["recipe"],
@@ -37,8 +39,13 @@ export default function RecipeLists() {
   });
 
   const handleToggleFav = (recipeId) => {
-    if (!user?._id) return;
-    const updatedFav = toggleFav(recipeId, favItems, user._id);
+    if (!userId) {
+      console.log("No user ID available");
+      return;
+    }
+    
+    console.log("Toggling favorite for recipe:", recipeId);
+    const updatedFav = toggleFav(recipeId, userId);
     setFavItems(updatedFav);
   };
 
@@ -120,7 +127,7 @@ export default function RecipeLists() {
                   {recipe.title}
                 </Typography>
 
-                <Grid container justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+                 <Grid container justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
                   <Typography variant="body2" color="#4b5563">
                     ⏱️ {recipe.time} mins
                   </Typography>
