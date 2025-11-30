@@ -10,34 +10,37 @@ import recipeRoutes from './routes/recipe.js';
 dotenv.config();
 const app = express();
 
-// Resolving __dirname in ES module
+// dirname fix
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = process.env.PORT || 5000;
+// DB
 connectDb();
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors());
 
-// Static files
+// CORRECT for same-domain deployment
+app.use(cors());
+app.set("trust proxy", 1);
+
+// Static uploads
 app.use(express.static('public'));
 
-// Routes
+// API Routes
 app.use('/', userRoutes);
 app.use('/recipe', recipeRoutes);
 
-// Serve frontend build
+// Serve frontend build (VERY IMPORTANT)
 app.use(express.static(path.join(__dirname, '/client/dist')));
 
-// Catch-all route for SPA
-app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'client/dist', 'index.html'));
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/dist/index.html'));
 });
 
-// ✅ Start server
+// Start
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
