@@ -60,154 +60,108 @@ export default function AddRecipe() {
   };
 
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", my: 4 }}>
-      <Paper
-        sx={{
-          p: 4,
-          width: "100%",
-          maxWidth: 800,
-          borderRadius: 2,
-          position: "relative",
-        }}
-        elevation={4}
-      >
-        {/* Close Icon at Top Right */}
+   <div className="flex justify-center my-10">
+      <div className="relative w-full max-w-3xl bg-white shadow-lg rounded-xl p-6 border">
+
+        {/* Close */}
         <IoMdClose
           onClick={() => navigate("/")}
           size={28}
-          style={{
-            cursor: "pointer",
-            position: "absolute",
-            top: 16, // distance from top
-            right: 16, // distance from right
-            color: "#555",
-          }}
+          className="absolute top-4 right-4 text-gray-600 cursor-pointer hover:text-black transition"
         />
-        <Typography
-          textAlign="center"
-          variant="h5"
-          fontWeight="bold"
-          sx={{ color: "#5fb298", marginBottom: "10px" }}
-        >
-          Add Your Recipe
-        </Typography>
 
-        <form onSubmit={handleSubmit}>
+        <h2 className="text-center text-2xl font-bold text-[#5fb298] mb-4">
+          Add Your Recipe
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+
           {/* Title */}
-          <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Grid item xs={2.5}>
-              <Typography>Title</Typography>
-            </Grid>
-            <Grid item xs={9.5}>
-              <TextField
-                name="title"
-                value={formData.title}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-            </Grid>
-          </Grid>
+          <div className="grid grid-cols-12 items-center gap-2">
+            <label className="col-span-3 font-medium">Title</label>
+            <input
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+              className="col-span-9 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#5fb298] outline-none"
+            />
+          </div>
 
           {/* Time */}
-          <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Grid item xs={2.5}>
-              <Typography>Time</Typography>
-            </Grid>
-            <Grid item xs={9.5}>
-              <TextField
-                name="time"
-                value={formData.time}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-            </Grid>
-          </Grid>
+          <div className="grid grid-cols-12 items-center gap-2">
+            <label className="col-span-3 font-medium">Time</label>
+            <input
+              name="time"
+              value={formData.time}
+              onChange={handleChange}
+              required
+              className="col-span-9 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#5fb298] outline-none"
+            />
+          </div>
 
           {/* Ingredients */}
-          <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 2 }}>
-            <Grid item xs={2.5}>
-              <Typography>Ingredients</Typography>
-            </Grid>
-            <Grid item xs={9.5}>
-              <TextField
-                name="ingredients"
-                value={formData.ingredients}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={3}
-                required
-              />
-            </Grid>
-          </Grid>
+          <div className="grid grid-cols-12 items-start gap-2">
+            <label className="col-span-3 font-medium">Ingredients</label>
+            <textarea
+              name="ingredients"
+              value={formData.ingredients}
+              onChange={handleChange}
+              rows={3}
+              required
+              className="col-span-9 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#5fb298] outline-none"
+            />
+          </div>
 
           {/* Instructions */}
-          <Grid container spacing={2} alignItems="flex-start" sx={{ mb: 2 }}>
-            <Grid item xs={2.5}>
-              <Typography>Instructions</Typography>
-            </Grid>
-            <Grid item xs={9.5}>
-              <TextField
-                name="instructions"
-                value={formData.instructions}
-                onChange={handleChange}
-                fullWidth
-                multiline
-                rows={4}
-                required
-              />
-            </Grid>
-          </Grid>
+          <div className="grid grid-cols-12 items-start gap-2">
+            <label className="col-span-3 font-medium">Instructions</label>
+            <textarea
+              name="instructions"
+              value={formData.instructions}
+              onChange={handleChange}
+              rows={4}
+              required
+              className="col-span-9 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#5fb298] outline-none"
+            />
+          </div>
 
-          {/* Recipe Image */}
-          <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-            <Grid item xs={2.5}>
-              <Typography>Cover Image</Typography>
-            </Grid>
-            <Grid item xs={9.5}>
+          {/* Image Upload */}
+          <div className="grid grid-cols-12 items-center gap-2">
+            <label className="col-span-3 font-medium">Cover Image</label>
+
+            <div className="col-span-9">
               <input
-                name="coverImage"
+                name="image"
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
-                style={{ width: "100%" }}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-[#5fb298] file:text-white cursor-pointer"
               />
+
               {preview && (
-                <Box mt={2}>
+                <div className="mt-3">
                   <img
                     src={preview}
-                    alt="Preview"
-                    style={{
-                      maxWidth: "200px",
-                      borderRadius: "8px",
-                      boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-                    }}
+                    className="max-w-[200px] rounded-lg shadow-md"
                   />
-                </Box>
+                </div>
               )}
-            </Grid>
-          </Grid>
+            </div>
+          </div>
 
-          {/* Submit Button */}
-          <Box sx={{ textAlign: "center", mt: 3 }}>
-            <Button
+          {/* Submit */}
+          <div className="text-center mt-4">
+            <button
               type="submit"
-              variant="contained"
-              sx={{
-                px: 4,
-                py: 1.2,
-                fontWeight: "bold",
-                backgroundColor: "#5fb298",
-                "&:hover": { backgroundColor: "#44927c" },
-              }}
+              className="bg-[#5fb298] text-white font-bold px-6 py-2 rounded-lg shadow hover:bg-[#44927c] transition"
             >
               Add Recipe
-            </Button>
-          </Box>
+            </button>
+          </div>
+
         </form>
-      </Paper>
-    </Box>
+      </div>
+    </div>
   );
 }
